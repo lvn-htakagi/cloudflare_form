@@ -1,0 +1,11 @@
+{
+  "name": "cloudflare-form",
+  "pages_build_output_dir": "./public",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "inquiries",
+      "database_id": "af14163e-b1b4-4e2c-9487-359e8948d447"
+    }
+  ]
+}
