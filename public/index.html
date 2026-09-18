@@ -124,6 +124,16 @@
           />
         </div>
 
+        <div class="form-group">
+          <label for="address">住所</label>
+          <input
+            type="text"
+            id="address"
+            name="address"
+            placeholder="東京都○○区○○町1-2-3"
+          />
+        </div>
+
         <!-- 件名 -->
         <div class="form-group">
           <label for="subject">件名</label>
@@ -162,11 +172,18 @@
         const formData = new FormData(form);
 
         const sendData = {
-          name: formData.get("name"),
-          email: formData.get("email"),
-          detail: formData.get("message"),
+          name: String(formData.get("name") ?? "").trim(),
+          address: String(formData.get("address") ?? "").trim(),
+          email: String(formData.get("email") ?? "").trim(),
+          subject: String(formData.get("subject") ?? "").trim(),
+          detail: String(formData.get("message") ?? "").trim(),
           "cf-turnstile-response": formData.get("cf-turnstile-response"),
         };
+
+        if (!sendData.name || !sendData.email || !sendData.detail) {
+          alert("必須項目を入力してください");
+          return;
+        }
 
         // 送信前にトークンが存在するか簡易確認
         if (!sendData["cf-turnstile-response"]) {

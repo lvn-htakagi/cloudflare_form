@@ -6,7 +6,7 @@ export async function handleSubmit(context) {
     // 1. JSONデータの取得
     const { request, env } = context;
     const body = await request.json();
-    const name = body.name;
+    const name = typeof body.name === "string" ? body.name : "";
     const token = body["cf-turnstile-response"];
     const ip = request.headers.get("CF-Connecting-IP");
 
@@ -47,12 +47,24 @@ export async function handleSubmit(context) {
       );
     }
 
+    const normalizedName = String(body.name ?? "").trim();
+    const address = String(body.address ?? "").trim();
+    const email = String(body.email ?? "").trim();
+    const detail = String(body.detail ?? "").trim();
+
+    if (!normalizedName || !email || !detail) {
+      return Response.json(
+        { success: false, message: "必要な入力項目が不足しています" },
+        { status: 400 },
+      );
+    }
+
     // 内側の try: D1（データベース）に関するエラーだけを個別で扱う
     try {
       await env.DB.prepare(
         "INSERT INTO chokuei_inquiries (name, address, email, detail) VALUES (?, ?, ?, ?)",
       )
-        .bind(body.name, "ここに住所が入る。", body.email, body.detail)
+        .bind(normalizedName, address, email, detail)
         .run();
     } catch (dbError) {
       console.error("D1エラー:", dbError);
@@ -67,13 +79,21 @@ export async function handleSubmit(context) {
     }
 
     try {
-      await sendMailer(body, env);
+      await sendMailer(
+        { ...body, name: normalizedName, address, email, detail },
+        env,
+      );
     } catch (emailError) {
-      // ★ ここでエラーの詳細を出力する
       console.error(
         "sendMailer実行エラー:",
-        emailError.message,
-        emailError.stack,
+        emailError instanceof Error ? emailError.message : emailError,
+      );
+      return Response.json(
+        {
+          success: false,
+          message: "メール送信に失敗しました",
+        },
+        { status: 500 },
       );
     }
 
